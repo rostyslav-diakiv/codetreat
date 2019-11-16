@@ -1,66 +1,84 @@
-const fieldSize = 10;
-const rows = 15;
-const cols = 15;
-const backgroupColor = 'grey';
-const aliveCellColor = 'red';
-
-const canvas = document.getElementById('canvas');
-canvas.width = cols * fieldSize;
-canvas.height = rows * fieldSize;
-const ctx = canvas.getContext('2d');
-
-ctx.fillStyle = 'gray';
-ctx.fillRect(0, 0, rows * fieldSize, cols * fieldSize);
-
-const gameBoard = new Game(rows, cols);
-
-for (let y = 0; y < gameBoard.map.length; y++) {
-  for (let x = 0; x < gameBoard.map[y].length; x++) {
-    if (gameBoard.map[y][x] === true) {
-      ctx.fillStyle = 'red';
-      ctx.fillRect(x * fieldSize, y * fieldSize, fieldSize, fieldSize);
-    } else {
-      ctx.fillStyle = 'grey';
-      ctx.fillRect(x * fieldSize, y * fieldSize, fieldSize, fieldSize);
+class Game {
+    constructor() {
+        this.board = [];
     }
-  }
+    initializeMap(rows, cols, probability) {
+        for (let i = 0; i < rows; i++) {
+            let currRow = [];
+            this.board.push(currRow)
+            for (let j = 0; j < cols; j++) {
+                currRow.push(+(Math.random() < probability))
+            }
+        }
+    }
+
+    countLifeNeighbours(row, col) {
+        return ([
+            this.getCell(row - 1, col - 1),
+            this.getCell(row, col - 1),
+            this.getCell(row + 1, col - 1),
+            this.getCell(row - 1, col),
+            this.getCell(row + 1, col),
+            this.getCell(row - 1, col + 1),
+            this.getCell(row, col + 1),
+            this.getCell(row + 1, col + 1),
+        ]).filter(cell => cell === 1).length;
+    }
+
+    getCell(row, col) {
+        try {
+            return this.board[row][col]            
+        } catch (error) {
+            return undefined
+        }
+    }
+
+    getNextStateOfCell(row, col) {
+        const amountLife = this.countLifeNeighbours(row, col);
+        const cell = this.getCell(row, col);
+        if (cell && (amountLife < 2 || amountLife > 3)) {
+            this.board[row][col] = 0;
+        } else if (!cell && amountLife === 3) {
+            this.board[row][col] = 1;
+        }
+
+        return this.board[row][col];
+    }
+
+    nextIteration() {
+        for (let row = 0; row < this.board.length; row++) {
+            for (let col = 0; col < this.board[row].length; col++) {
+                this.getNextStateOfCell(row, col)
+            }
+        }
+
+        return this.board;
+    }
+
+    start(interval) {
+        setInterval(() => {
+            this.nextIteration();
+            this.render();
+        }, interval);
+    }
+
+    render() {
+        const field = document.getElementById('field');  
+        field.innerHTML = '';
+        for (let row = 0; row < this.board.length; row++) {
+            const divRow = document.createElement('div');
+            divRow.classList.add('row');
+            field.appendChild(divRow);
+            for (let col = 0; col < this.board[row].length; col++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.innerHTML= this.board[row][col];
+                divRow.appendChild(cell);
+            }
+        }
+    }
 }
 
-function checkAlive(map) {
-  for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[y].length; x++) {
-      let neibourCounter = 0;
-      if (map[y - 1] !== undefined && map[y - 1][x]) neibourCounter++; // 12
-      if (map[y - 1] !== undefined && map[y - 1][x + 1]) neibourCounter++;
-      if (map[y] !== undefined && map[y][x + 1]) neibourCounter++;
-      if (map[y + 1] !== undefined && map[y + 1][x + 1]) neibourCounter++;
-      if (map[y + 1] !== undefined && map[y + 1][x]) neibourCounter++;
-      if (map[y + 1] !== undefined && map[y + 1][x - 1]) neibourCounter++;
-      if (map[y] !== undefined && map[y][x - 1]) neibourCounter++;
-      if (map[y - 1] !== undefined && map[y - 1][x - 1]) neibourCounter++;
-
-      if (map[y][x] && (neibourCounter < 2 || neibourCounter > 3)) {
-        map[y][x] = false;
-      }
-
-      if (!map[y][x] && neibourCounter === 3) {
-        map[y][x] = true;
-      }
-    }
-  }
-
-  for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[y].length; x++) {
-      if (map[y][x] === true) {
-        ctx.fillStyle = 'red';
-        ctx.fillRect(x * fieldSize, y * fieldSize, fieldSize, fieldSize);
-      } else {
-        ctx.fillStyle = 'grey';
-        ctx.fillRect(x * fieldSize, y * fieldSize, fieldSize, fieldSize);
-      }
-    }
-  }
-}
-
-setInterval(() => checkAlive(gameBoard.map), 100);
-
+const game = new Game();
+game.initializeMap(30, 30, 0.20);
+game.start(1000);

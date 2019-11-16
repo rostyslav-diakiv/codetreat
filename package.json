@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/rostyslav-diakiv/codetreat/issues"
   },
-  "homepage": "https://github.com/rostyslav-diakiv/codetreat#readme"
+  "homepage": "https://github.com/rostyslav-diakiv/codetreat#readme",
+  "dependencies": {
+    "jest": "^24.9.0"
+  }
 }
